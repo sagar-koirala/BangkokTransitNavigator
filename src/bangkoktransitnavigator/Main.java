@@ -1,28 +1,81 @@
 package bangkoktransitnavigator;
 
+// Import all the components we built
+import bangkoktransitnavigator.algorithm.DijkstraPathfinder;
+import bangkoktransitnavigator.algorithm.Pathfinder;
 import bangkoktransitnavigator.graph.TransitGraph;
-import bangkoktransitnavigator.model.Edge;
+import bangkoktransitnavigator.model.RouteResult;
 import bangkoktransitnavigator.model.Station;
+
+import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class Main {
 
     public static void main(String[] args) {
-        System.out.println("Bangkok Transit Navigator");
-
+        // --- 1. SETUP PHASE ---
+        System.out.println("Loading transit data...");
+        // The path to the data file, relative to the project's root directory
         TransitGraph graph = new TransitGraph("data/connections.csv");
+        Pathfinder pathfinder = new DijkstraPathfinder();
+        System.out.println("Data loaded. Welcome to the Bangkok Transit Navigator!");
 
-        // Show number of stations
-        int stationCount = graph.getAllStations().size();
-        System.out.println("Total stations: " + stationCount);
+        // --- 2. INTERACTION PHASE ---
+        // Use a try-with-resources block for the Scanner to ensure it's always closed
+        try (Scanner scanner = new Scanner(System.in)) {
+            while (true) {
+                System.out.println("\nEnter your starting station (or type 'exit' to quit):");
+                String startStationName = scanner.nextLine();
 
-        // Test neighbors of one station
-        Station asok = graph.getStation("Asok");
-        if (asok != null) {
-            System.out.println("\nNeighbors of " + asok.getName() + ":");
-            for (Edge edge : asok.getNeighbors()) {
-                System.out.printf("  -> %s (%s)\n", 
-                    edge.getDestination().getName(), edge.getLine());
+                // Allow the user to exit the program
+                if (startStationName.equalsIgnoreCase("exit")) {
+                    break;
+                }
+
+                System.out.println("Enter your destination station:");
+                String endStationName = scanner.nextLine();
+                
+                if (endStationName.equalsIgnoreCase("exit")) {
+                    break;
+                }
+
+                // --- 3. VALIDATION PHASE ---
+                Station startStation = graph.getStation(startStationName);
+                Station endStation = graph.getStation(endStationName);
+
+                if (startStation == null) {
+                    System.err.println("Error: Starting station '" + startStationName + "' not found.");
+                    continue; // Restart the loop
+                }
+                if (endStation == null) {
+                    System.err.println("Error: Destination station '" + endStationName + "' not found.");
+                    continue; // Restart the loop
+                }
+
+                // --- 4. EXECUTION PHASE ---
+                RouteResult result = pathfinder.findShortestPath(
+                    graph.getAllStations().values(),
+                    startStation,
+                    endStation
+                );
+
+                // --- 5. OUTPUT PHASE ---
+                System.out.println("\n--- Result ---");
+                if (!result.isFound()) {
+                    System.out.println("No path could be found from " + startStation.getName() + " to " + endStation.getName());
+                } else {
+                    System.out.println("Total cost (time): " + result.getTotalCost() + " minutes");
+                    
+                    // Use Java Streams to format the path nicely
+                    String pathString = result.getPath().stream()
+                                              .map(Station::getName) // Convert each Station object to its name
+                                              .collect(Collectors.joining(" -> ")); // Join them with an arrow
+
+                    System.out.println("Route: " + pathString);
+                }
+                System.out.println("--------------");
             }
         }
+        System.out.println("Thank you for using the Bangkok Transit Navigator!");
     }
 }
