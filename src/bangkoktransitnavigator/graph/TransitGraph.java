@@ -1,5 +1,6 @@
 package bangkoktransitnavigator.graph;
 
+import bangkoktransitnavigator.model.Cost;
 import bangkoktransitnavigator.model.Edge;
 import bangkoktransitnavigator.model.Station;
 
@@ -38,11 +39,14 @@ public class TransitGraph {
                     Station stationB = getOrCreateStation(stationBName);
                     
                     // Determine the weight based on the line name
-                    int weight = getWeightForLine(lineName);
-                    
-                    // Add edges in both directions (A -> B and B -> A)
-                    stationA.addNeighbor(new Edge(stationB, weight, lineName));
-                    stationB.addNeighbor(new Edge(stationA, weight, lineName));
+                    Cost cost;
+                    if (lineName.trim().equalsIgnoreCase("Interchange")) {
+                        cost = new Cost(10, 1); // 10 minutes, 1 transfer
+                    } else {
+                        cost = new Cost(3, 0);  // 3 minutes, 0 transfers
+                    }
+                    stationA.addNeighbor(new Edge(stationB, cost, lineName));
+                    stationB.addNeighbor(new Edge(stationA, cost, lineName));
                 }
             });
         } catch (IOException e) {
@@ -55,14 +59,14 @@ public class TransitGraph {
         return stations.computeIfAbsent(stationName.trim(), Station::new);
     }
     
-    private int getWeightForLine(String lineName) {
-        // Check if this is an interchange connection
-        if (lineName.trim().equalsIgnoreCase("Interchange")) {
-            return 10; // 10-minute penalty for a transfer
-        } else {
-            return 3; // 3-minute travel time
-        }
-    }
+    // private int getWeightForLine(String lineName) {
+    //     // Check if this is an interchange connection
+    //     if (lineName.trim().equalsIgnoreCase("Interchange")) {
+    //         return 10; // 10-minute penalty for a transfer
+    //     } else {
+    //         return 3; // 3-minute travel time
+    //     }
+    // }
     
     // getters
     public Station getStation(String name) {

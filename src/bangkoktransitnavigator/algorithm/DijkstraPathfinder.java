@@ -1,5 +1,6 @@
 package bangkoktransitnavigator.algorithm;
 
+import bangkoktransitnavigator.model.Cost;
 import bangkoktransitnavigator.model.Edge;
 import bangkoktransitnavigator.model.RouteResult;
 import bangkoktransitnavigator.model.Station;
@@ -8,6 +9,15 @@ import java.util.*;
 
 // An implementation of the Pathfinder interface using Dijkstra's algorithm.
 public class DijkstraPathfinder implements Pathfinder{
+
+    private final double timeWeight;
+    private final double transferWeight;
+
+    // The constructor takes the weights
+    public DijkstraPathfinder(double timeWeight, double transferWeight) {
+        this.timeWeight = timeWeight;
+        this.transferWeight = transferWeight;
+    }
 
     @Override
     public RouteResult findShortestPath(Collection<Station> allStations, Station start, Station end) {
@@ -42,7 +52,9 @@ public class DijkstraPathfinder implements Pathfinder{
 
             for (Edge edge : current.getNeighbors()) {
                 Station neighbor = edge.getDestination();
-                int newDist = currentDistance + edge.getWeight();
+                Cost edgeCost = edge.getCost();
+                double weightedCost = (timeWeight * edgeCost.getTime()) + (transferWeight * edgeCost.getTransfers());
+                Integer newDist = (int) (currentDistance + weightedCost);
 
                 if (newDist < distances.get(neighbor)) {
                     distances.put(neighbor, newDist);
@@ -54,17 +66,26 @@ public class DijkstraPathfinder implements Pathfinder{
         
         // 3. RECONSTRUCT THE PATH
         List<Station> path = new ArrayList<>();
-        Integer totalCost = distances.get(end);
+        int totalTime = 0;
 
-        if (totalCost != null && totalCost != Integer.MAX_VALUE) {
-            Station step = end;
-            while (step != null) {
-                path.add(step);
-                step = predecessors.get(step);
+        if (distances.get(end) != Double.POSITIVE_INFINITY) {
+            Station current = end;
+            while (current != null) {
+                path.add(current);
+                Station previous = predecessors.get(current);
+                if (previous != null) {
+                    for (Edge edge : previous.getNeighbors()) {
+                        if (edge.getDestination().equals(current)) {
+                            totalTime += edge.getCost().getTime(); // calculate the real time cost
+                            break;
+                        }
+                    }
+                }
+                current = previous;
             }
             Collections.reverse(path);
         }
         
-        return new RouteResult(path, (totalCost == null || totalCost == Integer.MAX_VALUE) ? -1 : totalCost);
+        return new RouteResult(path, totalTime);
     }
 }

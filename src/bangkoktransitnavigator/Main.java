@@ -17,7 +17,6 @@ public class Main {
         System.out.println("Loading transit data...");
         // The path to the data file, relative to the project's root directory
         TransitGraph graph = new TransitGraph("data/connections.csv");
-        Pathfinder pathfinder = new DijkstraPathfinder();
         System.out.println("Data loaded. Welcome to the Bangkok Transit Navigator!");
 
         // --- 2. INTERACTION PHASE ---
@@ -53,14 +52,12 @@ public class Main {
                 }
 
                 // --- 4. EXECUTION PHASE ---
-                RouteResult result = pathfinder.findShortestPath(
-                    graph.getAllStations().values(),
-                    startStation,
-                    endStation
-                );
-
-                // --- 5. OUTPUT PHASE ---
-                System.out.println("\n--- Result ---");
+                // Find the FASTEST path
+                Pathfinder fastestPathFinder = new DijkstraPathfinder(1.0, 0.0); // 100% weight on time
+                RouteResult result = fastestPathFinder.findShortestPath(graph.getAllStations().values(), startStation, endStation);
+                
+                System.out.println("\n--- Fastest Route ---");
+                System.out.println("Total time: " + result.getTotalCost() + " minutes");
                 if (!result.isFound()) {
                     System.out.println("No path could be found from " + startStation.getName() + " to " + endStation.getName());
                 } else {
@@ -74,6 +71,27 @@ public class Main {
                     System.out.println("Route: " + pathString);
                 }
                 System.out.println("--------------");
+
+                // Find the path with FEWEST TRANSFERS
+                Pathfinder fewestTransPathfinder = new DijkstraPathfinder(0.0, 1.0); // 100% weight on transfers
+                result = fewestTransPathfinder.findShortestPath(graph.getAllStations().values(), startStation, endStation);
+
+                System.out.println("\n--- Fewest Transfer Route ---");
+                System.out.println("Total time: " + result.getTotalCost() + " minutes");
+                if (!result.isFound()) {
+                    System.out.println("No path could be found from " + startStation.getName() + " to " + endStation.getName());
+                } else {
+                    System.out.println("Total cost (time): " + result.getTotalCost() + " minutes");
+                    
+                    // Use Java Streams to format the path nicely
+                    String pathString = result.getPath().stream()
+                                              .map(Station::getName) // Convert each Station object to its name
+                                              .collect(Collectors.joining(" -> ")); // Join them with an arrow
+
+                    System.out.println("Route: " + pathString);
+                }
+                System.out.println("--------------");
+                
             }
         }
         System.out.println("Thank you for using the Bangkok Transit Navigator!");
