@@ -8,7 +8,6 @@ import bangkoktransitnavigator.model.RouteResult;
 import bangkoktransitnavigator.model.Station;
 
 import java.util.Scanner;
-import java.util.stream.Collectors;
 
 public class Main {
 
@@ -57,18 +56,7 @@ public class Main {
                 RouteResult result = fastestPathFinder.findShortestPath(graph.getAllStations().values(), startStation, endStation);
                 
                 System.out.println("\n--- Fastest Route ---");
-                if (!result.isFound()) {
-                    System.out.println("No path could be found from " + startStation.getName() + " to " + endStation.getName());
-                } else {
-                    System.out.println("Time: " + result.getTotalCost().getTime() + " minutes");
-                    System.out.println("Transfers: " + result.getTotalCost().getTransfers());
-                    
-                    String pathString = result.getPath().stream()
-                                              .map(Station::getName) // Convert each Station object to its name
-                                              .collect(Collectors.joining(" -> ")); // Join them with an arrow
-
-                    System.out.println("Route: " + pathString);
-                }
+                result.printRoute();
                 System.out.println("--------------");
 
                 // Find the path with FEWEST TRANSFERS
@@ -76,18 +64,7 @@ public class Main {
                 result = fewestTransPathfinder.findShortestPath(graph.getAllStations().values(), startStation, endStation);
 
                 System.out.println("\n--- Fewest Transfer Route ---");
-                if (!result.isFound()) {
-                    System.out.println("No path could be found from " + startStation.getName() + " to " + endStation.getName());
-                } else {
-                    System.out.println("Time: " + result.getTotalCost().getTime() + " minutes");
-                    System.out.println("Transfers: " + result.getTotalCost().getTransfers());
-                    
-                    String pathString = result.getPath().stream()
-                                              .map(Station::getName) // Convert each Station object to its name
-                                              .collect(Collectors.joining(" -> ")); // Join them with an arrow
-
-                    System.out.println("Route: " + pathString);
-                }
+                result.printRoute();
                 System.out.println("--------------");
                 
             }

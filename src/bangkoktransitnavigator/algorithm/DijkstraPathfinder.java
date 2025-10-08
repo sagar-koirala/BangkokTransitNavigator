@@ -2,6 +2,7 @@ package bangkoktransitnavigator.algorithm;
 
 import bangkoktransitnavigator.model.Cost;
 import bangkoktransitnavigator.model.Edge;
+import bangkoktransitnavigator.model.RouteLeg;
 import bangkoktransitnavigator.model.RouteResult;
 import bangkoktransitnavigator.model.Station;
 
@@ -65,48 +66,54 @@ public class DijkstraPathfinder implements Pathfinder{
         }
         
         // 3. RECONSTRUCT THE PATH
-        List<Station> path = new ArrayList<>();
-        // build final path of stations
+        List<RouteLeg> path = new ArrayList<>();
+        int finalTime = 0;
+        int finalTransfers = 0;
+
         if (distances.get(end) != Double.POSITIVE_INFINITY) {
-            for (Station step = end; step != null; step = predecessors.get(step)) {
-                path.add(step);
-            }
-            Collections.reverse(path);
-        }
-        
-        // Analyze the path to calcualte Real cost
-        int resultTime = 0;
-        int resultTransfers = 0;
-        String currentLine = "";
-        
-        if (path.size() > 1) {
-            for (int i = 0; i < path.size() - 1; i++) {
-                Station from = path.get(i);
-                Station to = path.get(i + 1);
-                // Find the edge connecting these two stations
-                for (Edge edge : from.getNeighbors()) {
-                    if (edge.getDestination().equals(to)) {
-                        resultTime += edge.getCost().getTime(); // Always add the time cost
+            Station currentStation = end;
 
-                        String segmentLine = edge.getLine();
-                        if (segmentLine.equalsIgnoreCase("Interchange")) {
-                            continue; // Don't treat the interchange helper edge as a line
-                        }
+            while (currentStation != null) {
+                // Find the station that came before the current one
+                String lineToCurrent = null;
+                Station previousStation = predecessors.get(currentStation);
 
-                        if (currentLine.isEmpty()) {
-                            // This is the first leg of the journey
-                            currentLine = segmentLine;
-                        } else if (!currentLine.equals(segmentLine)) {
-                            // The line has changed, so this is a transfer
-                            resultTransfers++;
-                            currentLine = segmentLine; // Update the line we are currently on
+                if (previousStation != null) {
+                    // Find the edge that connects them to get the line name and cost
+                    for (Edge edge : previousStation.getNeighbors()) {
+                        if (edge.getDestination().equals(currentStation)) {
+                            lineToCurrent = edge.getLine();
+                            // Add the real time cost for this segment
+                            finalTime += edge.getCost().getTime(); 
+                            break;
                         }
-                        break; // Found the correct edge
                     }
+                }
+                
+                // Add the new detailed leg to the front of the list
+                path.add(0, new RouteLeg(currentStation, lineToCurrent));
+
+                // Move to the next station in the path
+                currentStation = previousStation;
+            }
+            
+            // Now that we have the full, detailed path, we can correctly count transfers
+            String currentLine = "";
+            for(RouteLeg leg : path){
+                String legLine = leg.getLineToGetHere();
+                if(legLine == null || legLine.equalsIgnoreCase("Interchange")) continue;
+                
+                if(currentLine.isEmpty()){
+                    currentLine = legLine;
+                } else if (!currentLine.equals(legLine)){
+                    finalTransfers++;
+                    currentLine = legLine;
                 }
             }
         }
-        Cost resultCost = new Cost(resultTime, resultTransfers);
-        return new RouteResult(path, resultCost);
+
+        Cost finalCost = new Cost(finalTime, finalTransfers);
+        // Note: We now pass the List<RouteLeg> to the RouteResult constructor
+        return new RouteResult(path, finalCost);
     }
 }
