@@ -66,26 +66,47 @@ public class DijkstraPathfinder implements Pathfinder{
         
         // 3. RECONSTRUCT THE PATH
         List<Station> path = new ArrayList<>();
-        int totalTime = 0;
-
+        // build final path of stations
         if (distances.get(end) != Double.POSITIVE_INFINITY) {
-            Station current = end;
-            while (current != null) {
-                path.add(current);
-                Station previous = predecessors.get(current);
-                if (previous != null) {
-                    for (Edge edge : previous.getNeighbors()) {
-                        if (edge.getDestination().equals(current)) {
-                            totalTime += edge.getCost().getTime(); // calculate the real time cost
-                            break;
-                        }
-                    }
-                }
-                current = previous;
+            for (Station step = end; step != null; step = predecessors.get(step)) {
+                path.add(step);
             }
             Collections.reverse(path);
         }
         
-        return new RouteResult(path, totalTime);
+        // Analyze the path to calcualte Real cost
+        int resultTime = 0;
+        int resultTransfers = 0;
+        String currentLine = "";
+        
+        if (path.size() > 1) {
+            for (int i = 0; i < path.size() - 1; i++) {
+                Station from = path.get(i);
+                Station to = path.get(i + 1);
+                // Find the edge connecting these two stations
+                for (Edge edge : from.getNeighbors()) {
+                    if (edge.getDestination().equals(to)) {
+                        resultTime += edge.getCost().getTime(); // Always add the time cost
+
+                        String segmentLine = edge.getLine();
+                        if (segmentLine.equalsIgnoreCase("Interchange")) {
+                            continue; // Don't treat the interchange helper edge as a line
+                        }
+
+                        if (currentLine.isEmpty()) {
+                            // This is the first leg of the journey
+                            currentLine = segmentLine;
+                        } else if (!currentLine.equals(segmentLine)) {
+                            // The line has changed, so this is a transfer
+                            resultTransfers++;
+                            currentLine = segmentLine; // Update the line we are currently on
+                        }
+                        break; // Found the correct edge
+                    }
+                }
+            }
+        }
+        Cost resultCost = new Cost(resultTime, resultTransfers);
+        return new RouteResult(path, resultCost);
     }
 }

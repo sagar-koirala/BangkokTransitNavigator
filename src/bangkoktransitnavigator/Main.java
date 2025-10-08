@@ -31,21 +31,21 @@ public class Main {
                     break;
                 }
 
+                Station startStation = graph.getStation(startStationName);
+                if (startStation == null) {
+                    System.err.println("Error: Starting station '" + startStationName + "' not found.");
+                    continue; // Restart the loop
+                }
+
                 System.out.println("Enter your destination station:");
                 String endStationName = scanner.nextLine();
                 
                 if (endStationName.equalsIgnoreCase("exit")) {
                     break;
                 }
-
-                // --- 3. VALIDATION PHASE ---
-                Station startStation = graph.getStation(startStationName);
+                
                 Station endStation = graph.getStation(endStationName);
 
-                if (startStation == null) {
-                    System.err.println("Error: Starting station '" + startStationName + "' not found.");
-                    continue; // Restart the loop
-                }
                 if (endStation == null) {
                     System.err.println("Error: Destination station '" + endStationName + "' not found.");
                     continue; // Restart the loop
@@ -57,13 +57,12 @@ public class Main {
                 RouteResult result = fastestPathFinder.findShortestPath(graph.getAllStations().values(), startStation, endStation);
                 
                 System.out.println("\n--- Fastest Route ---");
-                System.out.println("Total time: " + result.getTotalCost() + " minutes");
                 if (!result.isFound()) {
                     System.out.println("No path could be found from " + startStation.getName() + " to " + endStation.getName());
                 } else {
-                    System.out.println("Total cost (time): " + result.getTotalCost() + " minutes");
+                    System.out.println("Time: " + result.getTotalCost().getTime() + " minutes");
+                    System.out.println("Transfers: " + result.getTotalCost().getTransfers());
                     
-                    // Use Java Streams to format the path nicely
                     String pathString = result.getPath().stream()
                                               .map(Station::getName) // Convert each Station object to its name
                                               .collect(Collectors.joining(" -> ")); // Join them with an arrow
@@ -77,13 +76,12 @@ public class Main {
                 result = fewestTransPathfinder.findShortestPath(graph.getAllStations().values(), startStation, endStation);
 
                 System.out.println("\n--- Fewest Transfer Route ---");
-                System.out.println("Total time: " + result.getTotalCost() + " minutes");
                 if (!result.isFound()) {
                     System.out.println("No path could be found from " + startStation.getName() + " to " + endStation.getName());
                 } else {
-                    System.out.println("Total cost (time): " + result.getTotalCost() + " minutes");
+                    System.out.println("Time: " + result.getTotalCost().getTime() + " minutes");
+                    System.out.println("Transfers: " + result.getTotalCost().getTransfers());
                     
-                    // Use Java Streams to format the path nicely
                     String pathString = result.getPath().stream()
                                               .map(Station::getName) // Convert each Station object to its name
                                               .collect(Collectors.joining(" -> ")); // Join them with an arrow

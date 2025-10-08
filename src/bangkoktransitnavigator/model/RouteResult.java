@@ -6,9 +6,9 @@ import java.util.List;
 public class RouteResult {
 
     private final List<Station> path;
-    private final int totalCost;
+    private final Cost totalCost;
 
-    public RouteResult(List<Station> path, int totalCost) {
+    public RouteResult(List<Station> path, Cost totalCost) {
         this.path = path;
         this.totalCost = totalCost;
     }
@@ -17,7 +17,7 @@ public class RouteResult {
         return path;
     }
 
-    public int getTotalCost() {
+    public Cost getTotalCost() {
         return totalCost;
     }
 
