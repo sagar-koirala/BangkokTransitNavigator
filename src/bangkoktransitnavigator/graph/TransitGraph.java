@@ -59,15 +59,6 @@ public class TransitGraph {
         return stations.computeIfAbsent(stationName.trim(), Station::new);
     }
     
-    // private int getWeightForLine(String lineName) {
-    //     // Check if this is an interchange connection
-    //     if (lineName.trim().equalsIgnoreCase("Interchange")) {
-    //         return 10; // 10-minute penalty for a transfer
-    //     } else {
-    //         return 3; // 3-minute travel time
-    //     }
-    // }
-    
     // getters
     public Station getStation(String name) {
         return stations.get(name);
