@@ -24,6 +24,8 @@ public class DijkstraPathfinder implements Pathfinder{
     public RouteResult findShortestPath(Collection<Station> allStations, Station start, Station end) {
         
         // 1. INITIALIZATION
+        Set<Station> allowedStations = new HashSet<>(allStations);
+        
         Map<Station, Integer> distances = new HashMap<>();
         Map<Station, Station> predecessors = new HashMap<>();
         PriorityQueue<Station> priorityQueue = new PriorityQueue<>(Comparator.comparingInt(distances::get));
@@ -53,6 +55,10 @@ public class DijkstraPathfinder implements Pathfinder{
 
             for (Edge edge : current.getNeighbors()) {
                 Station neighbor = edge.getDestination();
+                // stations we are allowed to travel to for this specific search.
+                if (!allowedStations.contains(neighbor)) {
+                    continue; // Skip this neighbor, it's effectively "closed".
+                }
                 Cost edgeCost = edge.getCost();
                 double weightedCost = (timeWeight * edgeCost.getTime()) + (transferWeight * edgeCost.getTransfers());
                 Integer newDist = (int) (currentDistance + weightedCost);
